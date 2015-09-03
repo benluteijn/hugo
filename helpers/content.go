@@ -155,7 +155,11 @@ func GetHTMLRenderer(defaultFlags int, ctx *RenderingContext) blackfriday.Render
 		htmlFlags |= blackfriday.HTML_SMARTYPANTS_FRACTIONS
 	}
 
-	return blackfriday.HtmlRendererWithParameters(htmlFlags, "", "", renderParameters)
+	return &HugoHtmlRenderer{
+		Dir:      ctx.Dir,
+		RefLink:  ctx.RefLink,
+		Renderer: blackfriday.HtmlRendererWithParameters(htmlFlags, "", "", renderParameters),
+	}
 }
 
 func getMarkdownExtensions(ctx *RenderingContext) int {
@@ -285,7 +289,9 @@ type RenderingContext struct {
 	Content    []byte
 	PageFmt    string
 	DocumentID string
+	Dir        string
 	Config     *Blackfriday
+	RefLink    RefLinkFunc
 	configInit sync.Once
 }
 

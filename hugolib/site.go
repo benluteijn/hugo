@@ -231,6 +231,76 @@ func (s *SiteInfo) RelRef(ref string, page *Page) (string, error) {
 	return s.refLink(ref, page, true)
 }
 
+func (s *SiteInfo) GitHub(ref string, page *Page) (string, error) {
+	return s.githubLink(ref, page, true)
+}
+
+func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (string, error) {
+	var refURL *url.URL
+	var err error
+
+	// TODO can I make this a param to `hugo --use-github-links=/docs`?
+	// SVEN: add more tests - the prefix might be a real dir inside tho - add some pages that have it as a legitimate path
+	repositoryPathPrefix := "/docs"
+
+	refURL, err = url.Parse(strings.TrimPrefix(ref, repositoryPathPrefix))
+
+	if err != nil {
+		return "", err
+	}
+
+	var target *Page
+	var link string
+
+	if refURL.Path != "" {
+		refPath := filepath.Clean(filepath.FromSlash(refURL.Path))
+
+		if strings.IndexRune(refPath, os.PathSeparator) == 0 { // filepath.IsAbs fails to me.
+			refPath = refPath[1:]
+		} else {
+			if currentPage != nil {
+				refPath = filepath.Join(currentPage.Source.Dir(), refURL.Path)
+			}
+		}
+		for _, page := range []*Page(*s.Pages) {
+
+			//jww.ERROR.Printf("\tgithubLink(%s or %s -> %s, %s)\n", refURL.Path, refPath, page.Source.Path(), page.Source.LogicalName())
+
+			if page.Source.Path() == refPath {
+				target = page
+				break
+			}
+		}
+
+		if target == nil {
+			return "", fmt.Errorf("No page found with path or logical name \"%s\".\n", refURL.Path)
+		}
+
+		// SVEN: look at filepath.Rel() it might help, got the rel/non-rel url's (dangerous tho)
+		if relative {
+			link, err = target.RelPermalink()
+		} else {
+			link, err = target.Permalink()
+		}
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if refURL.Fragment != "" {
+		link = link + "#" + refURL.Fragment
+
+		if refURL.Path != "" && target != nil && !target.getRenderingConfig().PlainIDAnchors {
+			link = link + ":" + target.UniqueID()
+		} else if currentPage != nil && !currentPage.getRenderingConfig().PlainIDAnchors {
+			link = link + ":" + currentPage.UniqueID()
+		}
+	}
+
+	return link, nil
+}
+
 func (s *SiteInfo) addToPaginationPageCount(cnt uint64) {
 	atomic.AddUint64(&s.paginationPageCount, cnt)
 }

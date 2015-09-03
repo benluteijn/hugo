@@ -25,3 +25,10 @@ install-gitinfo:
 no-git-info:
 	go build -o hugo main.go
 
+
+docker:
+	rm -f hugo.gz
+	docker build -t hugo .
+	docker run --name hugo-build hugo gzip hugo
+	docker cp hugo-build:/go/src/github.com/spf13/hugo/hugo.gz .
+	docker rm hugo-build

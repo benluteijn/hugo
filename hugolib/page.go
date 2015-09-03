@@ -201,15 +201,25 @@ func (p *Page) setSummary() {
 	}
 }
 
+func (p *Page) GitHub(ref string) (string, error) {
+	return p.Node.Site.GitHub(ref, p)
+}
+
 func (p *Page) renderBytes(content []byte) []byte {
+	fn := func(ref string) (string, error) {
+		return p.GitHub(ref)
+	}
 	return helpers.RenderBytes(
 		&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-			DocumentID: p.UniqueID(), Config: p.getRenderingConfig()})
+			DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), Dir: p.Source.Dir(), RefLink: fn})
 }
 
 func (p *Page) renderContent(content []byte) []byte {
+	fn := func(ref string) (string, error) {
+		return p.GitHub(ref)
+	}
 	return helpers.RenderBytesWithTOC(&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-		DocumentID: p.UniqueID(), Config: p.getRenderingConfig()})
+		DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), Dir: p.Source.Dir(), RefLink: fn})
 }
 
 func (p *Page) getRenderingConfig() *helpers.Blackfriday {
