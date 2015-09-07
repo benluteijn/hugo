@@ -7,10 +7,10 @@ ENV USER root
 #ADD . /go/src/github.com/spf13/hugo
 
 ENV trigger 1
-RUN go get -d -v github.com/spf13/hugo
+#RUN go get -d -v github.com/spf13/hugo
 WORKDIR /go/src/github.com/spf13/hugo
 
-RUN go get -d -v
 ADD . /go/src/github.com/spf13/hugo
+RUN go get -d -v
 RUN go build -o hugo main.go
 

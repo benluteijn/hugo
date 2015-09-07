@@ -5,20 +5,23 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"unicode"
 )
 
 const (
-	HTML_LEAD       = "<"
-	YAML_LEAD       = "-"
-	YAML_DELIM_UNIX = "---\n"
-	YAML_DELIM_DOS  = "---\r\n"
-	YAML_DELIM      = "---"
-	TOML_LEAD       = "+"
-	TOML_DELIM_UNIX = "+++\n"
-	TOML_DELIM_DOS  = "+++\r\n"
-	TOML_DELIM      = "+++"
-	JSON_LEAD       = "{"
+	HTML_LEAD          = "<"
+	YAML_LEAD          = "-"
+	YAML_DELIM_UNIX    = "---\n"
+	YAML_DELIM_DOS     = "---\r\n"
+	YAML_DELIM         = "---"
+	TOML_LEAD          = "+"
+	TOML_DELIM_UNIX    = "+++\n"
+	TOML_DELIM_DOS     = "+++\r\n"
+	TOML_DELIM         = "+++"
+	JSON_LEAD          = "{"
+	HTML_COMMENT_START = "<!--[metadata]>"
+	HTML_COMMENT_END   = "<![end-metadata]-->"
 )
 
 var (
@@ -82,6 +85,9 @@ func ReadFrom(r io.Reader) (p Page, err error) {
 	if err = chompWhitespace(reader); err != nil && err != io.EOF {
 		return
 	}
+	if err = chompCommentedFrontmatter(reader, HTML_COMMENT_START); err != nil && err != io.EOF {
+		return
+	}
 
 	firstLine, err := peekLine(reader)
 	if err != nil && err != io.EOF {
@@ -121,6 +127,25 @@ func chompWhitespace(r io.RuneScanner) (err error) {
 			return nil
 		}
 	}
+}
+
+func chompCommentedFrontmatter(r *bufio.Reader, comment string) (err error) {
+	candidate, err := r.Peek(len(comment))
+	if err != nil {
+		return err
+	}
+
+	if strings.EqualFold(string(candidate), comment) {
+		buf := make([]byte, len(comment))
+		if _, err = r.Read(buf); err != nil {
+			return
+		}
+	}
+
+	if err = chompWhitespace(r); err != nil {
+		return err
+	}
+	return nil
 }
 
 func peekLine(r *bufio.Reader) (line []byte, err error) {
@@ -259,11 +284,13 @@ func extractFrontMatterDelims(r *bufio.Reader, left, right []byte) (fm FrontMatt
 
 		if level == 0 {
 			// Consumes white spaces immediately behind frontmatter
-			if err = chompWhitespace(r); err != nil {
-				if err != io.EOF {
-					return nil, err
-				}
+			if err = chompWhitespace(r); err != nil && err != io.EOF {
+				return nil, err
 			}
+			if err = chompCommentedFrontmatter(r, HTML_COMMENT_END); err != nil && err != io.EOF {
+				return nil, err
+			}
+
 			return buf.Bytes(), nil
 		}
 	}

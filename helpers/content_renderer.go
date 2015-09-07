@@ -32,16 +32,19 @@ func (renderer *HugoHtmlRenderer) Link(out *bytes.Buffer, link []byte, title []b
 		// Use the blackfriday built in Links
 		renderer.Renderer.Link(out, link, title, content)
 	} else {
-		jww.ERROR.Printf("Sven was rendering a link here (%v, %v, %v)\n", string(link), string(title), renderer.Dir)
+		// jww.ERROR.Printf("Sven was rendering a link here (%v, %v, %v)\n", string(link), string(title), renderer.Dir)
 		//	renderer.Renderer.Link(out, link, []byte("SVEN"+string(title)), []byte(renderer.Page.Node.Site.RelRef(link, renderer.Page)+string(content)))
 
-		newTitle := []byte("found relref" + string(title))
 		newLink, err := renderer.RefLink(string(link))
 		if err != nil {
 			newLink = string(link)
-			newTitle = title
+			jww.ERROR.Printf("GH: failed to find a link for %s", string(link))
 		}
 
-		renderer.Renderer.Link(out, []byte(newLink), newTitle, content)
+		renderer.Renderer.Link(out, []byte(newLink), title, content)
 	}
+}
+
+func (renderer *HugoHtmlRenderer) Image(out *bytes.Buffer, link []byte, title []byte, alt []byte) {
+	renderer.Renderer.Image(out, link, title, alt)
 }

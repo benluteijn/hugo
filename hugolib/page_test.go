@@ -19,6 +19,7 @@ const (
 	SIMPLE_PAGE                      = "---\ntitle: Simple\n---\nSimple Page\n"
 	INVALID_FRONT_MATTER_MISSING     = "This is a test"
 	RENDER_NO_FRONT_MATTER           = "<!doctype><html><head></head><body>This is a test</body></html>"
+	CONTENT_WITH_COMMENTED_FM        = "<!--[metaData]>\n+++\ntitle = \"Network configuration\"\ndescription = \"Docker networking\"\nkeywords = [\"network\"]\n[menu.main]\nparent= \"smn_administrate\"\n+++\n<![end-metadata]-->\n\n# Network configuration\n\n##\nSummary"
 	INVALID_FRONT_MATTER_SHORT_DELIM = `
 --
 title: Short delim start
@@ -533,6 +534,7 @@ func TestShouldRenderContent(t *testing.T) {
 		// TODO how to deal with malformed frontmatter.  In this case it'll be rendered as markdown.
 		{INVALID_FRONT_MATTER_SHORT_DELIM, true},
 		{RENDER_NO_FRONT_MATTER, false},
+		{CONTENT_WITH_COMMENTED_FM, true},
 	}
 
 	for _, test := range tests {
