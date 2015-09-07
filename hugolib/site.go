@@ -250,7 +250,9 @@ func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (str
 
 	if refURL.Scheme != "" {
 		// TODO: consider looking for http(s?)://github.com/user/project/prefix and replacing it - tho this may be intentional, so idk
-		return "", fmt.Errorf("Not a plain filepath link (%s)", ref)
+		//return "", fmt.Errorf("Not a plain filepath link (%s)", ref)
+		// Treat this as not an error, as the link is used as-is
+		return ref, nil
 	}
 
 	var target *Page
@@ -266,15 +268,32 @@ func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (str
 				refPath = filepath.Join(currentPage.Source.Dir(), refURL.Path)
 			}
 		}
+		
 		for _, page := range []*Page(*s.Pages) {
 			if page.Source.Path() == refPath {
 				target = page
 				break
 			}
 		}
+		// need to exhaust the test, then try with the others :/
+		// if the refPath doesn't end in a filename with extension `.md`, then try with `.md` , and then `/index.md`
+		mdPath := strings.TrimSuffix(refPath, string(os.PathSeparator)) + ".md"
+		for _, page := range []*Page(*s.Pages) {
+			if page.Source.Path() == mdPath {
+				target = page
+				break
+			}
+		}
+		indexPath := filepath.Join(refPath, "index.md")
+		for _, page := range []*Page(*s.Pages) {
+			if page.Source.Path() == indexPath {
+				target = page
+				break
+			}
+		}
 
 		if target == nil {
-			return "", fmt.Errorf("No page found with path or logical name \"%s\".\n", refURL.Path)
+			return "", fmt.Errorf("No page found for \"%s\" on page \"%s\".\n", ref, currentPage.Source.Path())
 		}
 
 		// SVEN: look at filepath.Rel() it might help, got the rel/non-rel url's (dangerous tho)

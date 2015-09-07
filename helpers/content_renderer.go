@@ -28,7 +28,7 @@ func (renderer *HugoHtmlRenderer) BlockCode(out *bytes.Buffer, text []byte, lang
 }
 
 func (renderer *HugoHtmlRenderer) Link(out *bytes.Buffer, link []byte, title []byte, content []byte) {
-	if renderer.RefLink == nil {
+	if renderer.RefLink == nil || bytes.HasPrefix(link, []byte("{@{@HUGOSHORTCODE")) {
 		// Use the blackfriday built in Links
 		renderer.Renderer.Link(out, link, title, content)
 	} else {
@@ -38,7 +38,7 @@ func (renderer *HugoHtmlRenderer) Link(out *bytes.Buffer, link []byte, title []b
 		newLink, err := renderer.RefLink(string(link))
 		if err != nil {
 			newLink = string(link)
-			jww.ERROR.Printf("GH: failed to find a link for %s", string(link))
+			jww.ERROR.Printf("GH: %s", err)
 		}
 
 		renderer.Renderer.Link(out, []byte(newLink), title, content)
