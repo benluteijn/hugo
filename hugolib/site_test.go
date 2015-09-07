@@ -1097,4 +1097,7 @@ func TestGitHubLinking(t *testing.T) {
 		}
 	}
 	// TODO: and then the failure cases.
+	// 			"https://docker.com":           "",
+	// site_test.go:1094: Expected https://docker.com to resolve to (), got () - error: Not a plain filepath link (https://docker.com)
+
 }

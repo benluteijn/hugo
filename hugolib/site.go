@@ -244,9 +244,13 @@ func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (str
 	repositoryPathPrefix := "/docs"
 
 	refURL, err = url.Parse(strings.TrimPrefix(ref, repositoryPathPrefix))
-
 	if err != nil {
 		return "", err
+	}
+
+	if refURL.Scheme != "" {
+		// TODO: consider looking for http(s?)://github.com/user/project/prefix and replacing it - tho this may be intentional, so idk
+		return "", fmt.Errorf("Not a plain filepath link (%s)", ref)
 	}
 
 	var target *Page
@@ -263,9 +267,6 @@ func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (str
 			}
 		}
 		for _, page := range []*Page(*s.Pages) {
-
-			//jww.ERROR.Printf("\tgithubLink(%s or %s -> %s, %s)\n", refURL.Path, refPath, page.Source.Path(), page.Source.LogicalName())
-
 			if page.Source.Path() == refPath {
 				target = page
 				break
