@@ -206,20 +206,26 @@ func (p *Page) GitHub(ref string) (string, error) {
 }
 
 func (p *Page) renderBytes(content []byte) []byte {
-	fn := func(ref string) (string, error) {
-		return p.GitHub(ref)
+	var fn helpers.LinkResolverFunc
+	if (p.getRenderingConfig().GitHubLinkEval) {
+		fn = func(ref string) (string, error) {
+			return p.GitHub(ref)
+		}
 	}
 	return helpers.RenderBytes(
 		&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-			DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), Dir: p.Source.Dir(), RefLink: fn})
+			DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn})
 }
 
 func (p *Page) renderContent(content []byte) []byte {
-	fn := func(ref string) (string, error) {
-		return p.GitHub(ref)
+	var fn helpers.LinkResolverFunc
+	if (p.getRenderingConfig().GitHubLinkEval) {
+		fn = func(ref string) (string, error) {
+			return p.GitHub(ref)
+		}
 	}
 	return helpers.RenderBytesWithTOC(&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-		DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), Dir: p.Source.Dir(), RefLink: fn})
+		DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn})
 }
 
 func (p *Page) getRenderingConfig() *helpers.Blackfriday {

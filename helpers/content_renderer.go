@@ -9,12 +9,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-type RefLinkFunc func(ref string) (string, error)
+type LinkResolverFunc func(ref string) (string, error)
 
 // Wraps a blackfriday.Renderer, typically a blackfriday.Html
 type HugoHtmlRenderer struct {
-	Dir     string
-	RefLink RefLinkFunc
+	LinkResolver LinkResolverFunc
 	blackfriday.Renderer
 }
 
@@ -28,14 +27,11 @@ func (renderer *HugoHtmlRenderer) BlockCode(out *bytes.Buffer, text []byte, lang
 }
 
 func (renderer *HugoHtmlRenderer) Link(out *bytes.Buffer, link []byte, title []byte, content []byte) {
-	if renderer.RefLink == nil || bytes.HasPrefix(link, []byte("{@{@HUGOSHORTCODE")) {
+	if renderer.LinkResolver == nil || bytes.HasPrefix(link, []byte("{@{@HUGOSHORTCODE")) {
 		// Use the blackfriday built in Links
 		renderer.Renderer.Link(out, link, title, content)
 	} else {
-		// jww.ERROR.Printf("Sven was rendering a link here (%v, %v, %v)\n", string(link), string(title), renderer.Dir)
-		//	renderer.Renderer.Link(out, link, []byte("SVEN"+string(title)), []byte(renderer.Page.Node.Site.RelRef(link, renderer.Page)+string(content)))
-
-		newLink, err := renderer.RefLink(string(link))
+		newLink, err := renderer.LinkResolver(string(link))
 		if err != nil {
 			newLink = string(link)
 			jww.ERROR.Printf("GH: %s", err)

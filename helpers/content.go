@@ -43,6 +43,7 @@ type Blackfriday struct {
 	AngledQuotes   bool
 	Fractions      bool
 	PlainIDAnchors bool
+	GitHubLinkEval bool
 	Extensions     []string
 	ExtensionsMask []string
 }
@@ -53,6 +54,7 @@ func NewBlackfriday() *Blackfriday {
 		AngledQuotes:   false,
 		Fractions:      true,
 		PlainIDAnchors: false,
+		GitHubLinkEval: false,
 	}
 }
 
@@ -156,9 +158,8 @@ func GetHTMLRenderer(defaultFlags int, ctx *RenderingContext) blackfriday.Render
 	}
 
 	return &HugoHtmlRenderer{
-		Dir:      ctx.Dir,
-		RefLink:  ctx.RefLink,
-		Renderer: blackfriday.HtmlRendererWithParameters(htmlFlags, "", "", renderParameters),
+		LinkResolver:  ctx.LinkResolver,
+		Renderer:      blackfriday.HtmlRendererWithParameters(htmlFlags, "", "", renderParameters),
 	}
 }
 
@@ -286,13 +287,12 @@ func ExtractTOC(content []byte) (newcontent []byte, toc []byte) {
 // RenderingContext holds contextual information, like content and configuration,
 // for a given content renderin.g
 type RenderingContext struct {
-	Content    []byte
-	PageFmt    string
-	DocumentID string
-	Dir        string
-	Config     *Blackfriday
-	RefLink    RefLinkFunc
-	configInit sync.Once
+	Content      []byte
+	PageFmt      string
+	DocumentID   string
+	Config       *Blackfriday
+	LinkResolver LinkResolverFunc
+	configInit   sync.Once
 }
 
 func (c *RenderingContext) getConfig() *Blackfriday {
