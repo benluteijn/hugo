@@ -214,6 +214,96 @@ func (s *SiteInfo) RelRef(ref string, page *Page) (string, error) {
 	return s.refLink(ref, page, true)
 }
 
+func (s *SiteInfo) GitHub(ref string, page *Page) (string, error) {
+	return s.githubLink(ref, page, true)
+}
+
+func (s *SiteInfo) githubLink(ref string, currentPage *Page, relative bool) (string, error) {
+	var refURL *url.URL
+	var err error
+
+	// TODO can I make this a param to `hugo --use-github-links=/docs`?
+	// SVEN: add more tests - the prefix might be a real dir inside tho - add some pages that have it as a legitimate path
+	repositoryPathPrefix := "/docs"
+
+	refURL, err = url.Parse(strings.TrimPrefix(ref, repositoryPathPrefix))
+	if err != nil {
+		return "", err
+	}
+
+	if refURL.Scheme != "" {
+		// TODO: consider looking for http(s?)://github.com/user/project/prefix and replacing it - tho this may be intentional, so idk
+		//return "", fmt.Errorf("Not a plain filepath link (%s)", ref)
+		// Treat this as not an error, as the link is used as-is
+		return ref, nil
+	}
+
+	var target *Page
+	var link string
+
+	if refURL.Path != "" {
+		refPath := filepath.Clean(filepath.FromSlash(refURL.Path))
+
+		if strings.IndexRune(refPath, os.PathSeparator) == 0 { // filepath.IsAbs fails to me.
+			refPath = refPath[1:]
+		} else {
+			if currentPage != nil {
+				refPath = filepath.Join(currentPage.Source.Dir(), refURL.Path)
+			}
+		}
+
+		for _, page := range []*Page(*s.Pages) {
+			if page.Source.Path() == refPath {
+				target = page
+				break
+			}
+		}
+		// need to exhaust the test, then try with the others :/
+		// if the refPath doesn't end in a filename with extension `.md`, then try with `.md` , and then `/index.md`
+		mdPath := strings.TrimSuffix(refPath, string(os.PathSeparator)) + ".md"
+		for _, page := range []*Page(*s.Pages) {
+			if page.Source.Path() == mdPath {
+				target = page
+				break
+			}
+		}
+		indexPath := filepath.Join(refPath, "index.md")
+		for _, page := range []*Page(*s.Pages) {
+			if page.Source.Path() == indexPath {
+				target = page
+				break
+			}
+		}
+
+		if target == nil {
+			return "", fmt.Errorf("No page found for \"%s\" on page \"%s\".\n", ref, currentPage.Source.Path())
+		}
+
+		// SVEN: look at filepath.Rel() it might help, got the rel/non-rel url's (dangerous tho)
+		if relative {
+			link, err = target.RelPermalink()
+		} else {
+			link, err = target.Permalink()
+		}
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if refURL.Fragment != "" {
+		link = link + "#" + refURL.Fragment
+
+		if refURL.Path != "" && target != nil && !target.getRenderingConfig().PlainIDAnchors {
+			link = link + ":" + target.UniqueID()
+		} else if currentPage != nil && !currentPage.getRenderingConfig().PlainIDAnchors {
+			link = link + ":" + currentPage.UniqueID()
+		}
+	}
+
+	return link, nil
+}
+
 func (s *SiteInfo) addToPaginationPageCount(cnt uint64) {
 	atomic.AddUint64(&s.paginationPageCount, cnt)
 }
