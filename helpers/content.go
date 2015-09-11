@@ -176,6 +176,7 @@ func GetHTMLRenderer(defaultFlags int, ctx *RenderingContext) blackfriday.Render
 	}
 
 	return &HugoHtmlRenderer{
+		FileResolver: ctx.FileResolver,
 		LinkResolver: ctx.LinkResolver,
 		Renderer:     blackfriday.HtmlRendererWithParameters(htmlFlags, "", "", renderParameters),
 	}
@@ -310,6 +311,7 @@ type RenderingContext struct {
 	PageFmt      string
 	DocumentID   string
 	Config       *Blackfriday
+	FileResolver FileResolverFunc
 	LinkResolver LinkResolverFunc
 	configInit   sync.Once
 }

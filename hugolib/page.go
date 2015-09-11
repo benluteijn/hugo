@@ -225,31 +225,35 @@ func (p *Page) setSummary() {
 	}
 }
 
-func (p *Page) GitHub(ref string) (string, error) {
-	return p.Node.Site.GitHub(ref, p)
-}
-
 func (p *Page) renderBytes(content []byte) []byte {
 	var fn helpers.LinkResolverFunc
+	var file_fn helpers.FileResolverFunc
 	if p.getRenderingConfig().GitHubLinkEval {
 		fn = func(ref string) (string, error) {
-			return p.GitHub(ref)
+			return p.Node.Site.GitHub(ref, p)
+		}
+		file_fn = func(ref string) (string, error) {
+			return p.Node.Site.GitHubFileLink(ref, p)
 		}
 	}
 	return helpers.RenderBytes(
 		&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-			DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn})
+			DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn, FileResolver: file_fn})
 }
 
 func (p *Page) renderContent(content []byte) []byte {
 	var fn helpers.LinkResolverFunc
+	var file_fn helpers.FileResolverFunc
 	if p.getRenderingConfig().GitHubLinkEval {
 		fn = func(ref string) (string, error) {
-			return p.GitHub(ref)
+			return p.Node.Site.GitHub(ref, p)
+		}
+		file_fn = func(ref string) (string, error) {
+			return p.Node.Site.GitHubFileLink(ref, p)
 		}
 	}
 	return helpers.RenderBytesWithTOC(&helpers.RenderingContext{Content: content, PageFmt: p.guessMarkupType(),
-		DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn})
+		DocumentID: p.UniqueID(), Config: p.getRenderingConfig(), LinkResolver: fn, FileResolver: file_fn})
 }
 
 func (p *Page) getRenderingConfig() *helpers.Blackfriday {

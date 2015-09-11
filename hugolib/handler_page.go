@@ -99,6 +99,7 @@ func (h htmlHandler) PageConvert(p *Page, t tpl.Template) HandledResult {
 	}
 
 	p.Content = helpers.BytesToHTML(content)
+
 	return HandledResult{err: nil}
 }
 
