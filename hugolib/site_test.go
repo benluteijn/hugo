@@ -1023,6 +1023,10 @@ func TestRefLinking(t *testing.T) {
 		{filepath.FromSlash("level2/index.md"), []byte("")},
 		{filepath.FromSlash("level2/common.md"), []byte("")},
 
+		{filepath.FromSlash("level2b/2b-root.md"), []byte("")},
+		{filepath.FromSlash("level2b/index.md"), []byte("")},
+		{filepath.FromSlash("level2b/common.md"), []byte("")},
+
 		{filepath.FromSlash("level2/level3/3-root.md"), []byte("")},
 		{filepath.FromSlash("level2/level3/index.md"), []byte("")},
 		{filepath.FromSlash("level2/level3/common.md"), []byte("")},
