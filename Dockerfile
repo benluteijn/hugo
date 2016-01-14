@@ -38,6 +38,11 @@ RUN go get github.com/stretchr/testify/assert \
 
 COPY . /go/src/github.com/spf13/hugo
 RUN go get -d -v github.com/spf13/hugo
+
+#Lets Panic!
+RUN cd /go/src \
+	&& rgrep -l log.Fatal | grep .go$ | xargs sed -i~ 's/log.Fatal/log.Panic/g'
+
 RUN go install github.com/spf13/hugo
 
 WORKDIR /go/src/github.com/spf13/hugo
